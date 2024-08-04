@@ -1,7 +1,35 @@
+from numpy import mean, absolute
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft
 import wave
+
+def dominantFreq(signal):
+  #fourier transformation to get dominant frequencies
+  signalfft = fft(signal)
+  amplitudeSpectrum = np.abs(signalfft)
+  amplitudeSpectrum = amplitudeSpectrum / np.max(amplitudeSpectrum)
+  freqs = np.fft.fftfreq(samples, 1 / sampleRate)
+
+  dominantFreqs = []
+  threshold = 0.1
+  #get the 3 most dominant frequencies
+  while 1:
+    dominantIndices = np.where(amplitudeSpectrum[:samples // 2] >= threshold)[0]
+    dominantFreqs = freqs[dominantIndices]
+    if (len(dominantFreqs) <= 3):
+      break
+    threshold += 0.01
+  return dominantFreqs
+
+def IntervalFreqs(signal, interval):
+  freqs = []
+  start = 0
+  while (start + interval <= len(signal)):
+    section = signal[start:start+interval]
+    freqs.append(dominantFreq(section))
+    start += interval
+  return freqs
 
 #get some audio info
 wav = wave.open('rick.wav', 'rb')
@@ -12,31 +40,10 @@ duration = samples/sampleRate
 signal = wav.readframes(samples)
 signalArray = np.frombuffer(signal, dtype=np.int16)
 
-lchannel = signalArray[0::2] #the amplitude array for only the left channel
+lchannel = signalArray[1::2] #the amplitude array for only the left channel
 
-times = np.linspace(0, duration, num=samples)
-plt.figure(figsize=(15, 5))
-plt.plot(times, lchannel)
-plt.title('Amplitudes')
-plt.ylabel('Signal value')
-plt.xlabel('Time')
-plt.xlim(0, duration)
-plt.show()
+interval = int(sampleRate/10) #get the dominant frequencies every 0.1 seconds
 
-#fourier transformation to get dominant frequencies
-lchannelfft = fft(lchannel)
-amplitudeSpectrum = np.abs(lchannelfft)
-amplitudeSpectrum = amplitudeSpectrum / np.max(amplitudeSpectrum)
-freqs = np.fft.fftfreq(samples, 1 / sampleRate)
 
-plt.plot(freqs[:samples // 2], amplitudeSpectrum[:samples // 2])
-plt.xlabel('Frequency')
-plt.ylabel('Amplitude normalized')
-plt.title('Dominant frequencies')
-plt.show()
 
-threshold = 0.2 #the threshold that the normalized frequencies have to be above to be considered dominant
-dominant_freq_indices = np.where(amplitudeSpectrum[:samples // 2] >= threshold)[0]
-dominant_freqs = freqs[dominant_freq_indices]
-
-print(dominant_freqs)
+freqs = IntervalFreqs(lchannel, interval)
