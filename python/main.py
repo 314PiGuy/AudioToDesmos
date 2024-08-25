@@ -24,6 +24,14 @@ for note in noteEvents:
   frequencies.append(midiToHz(pitch))
   times.append(time)
 
+
+for i in range(1, len(frequencies)-1):
+  dif = abs(frequencies[i]-frequencies[i-1])
+  dif2 = abs(frequencies[i]-frequencies[i+1])
+  if dif2 > 500 and dif > 500 and frequencies[i] > 1000:
+    frequencies[i] = frequencies[i-1]
+
+
 times.append(duration)
 
 count = 0
